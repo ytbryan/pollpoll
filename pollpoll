@@ -1,0 +1,207 @@
+#! /usr/local/bin/python3
+
+#######################################################################################
+# Lightning fast polling
+# A simple command-line to poll on Slack. Quick Feedback. Quick Sensing in a classroom.
+# github.com/ytbryan/pollpoll
+# See documentation -> https://slack.dev/python-slack-sdk/web/index.html
+#######################################################################################
+
+import sys
+import yaml
+import logging 
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
+logging.basicConfig(level=logging.DEBUG)
+
+with open("data.yml", 'r') as file:
+    data = yaml.safe_load(file)
+    client = WebClient(token=data['token'])
+    channel_id = data['channel']
+
+def write_to_history(command):
+    f = open("history.txt", "a")
+    f.write(command + "\n")
+    f.close()
+
+def get_everyone():
+
+    for person in client.users_list()["members"]:
+        if "id" and "name" and "real_name" in person: 
+        # if person['id'] and person['name'] and person['real_name']:
+            print(f"{person['id']} {person['name']} {person['real_name']}") 
+
+def post_to_individual_person(message):
+    print("individual message")
+    #https://api.slack.com/methods/users.list
+
+
+def collect_reactions():
+    conversation_history = []
+    print("collecting reaction")
+    print(channel_id)
+    result = client.conversations_history(channel=channel_id)
+    conversation_history = result["messages"]
+    print(conversation_history)
+    
+def post_to_slack(message):
+    client.chat_postMessage(
+        channel=channel_id, 
+        text=message,
+        icon_url="https://ca.slack-edge.com/T026W7BBT9Q-U026V9F8LLF-e42dd120a81f-512",
+        username="ytbryan"
+    )
+
+def setup_workspace():
+    # check the project with the hidden file to indicate already setup 
+    print("setup")
+    # read from the yml
+    # loop through and create these channels
+    # channel_name = f"my-private-channel-"
+    # response = client.conversations_create(
+    #     name=channel_name,
+    #     is_private=True
+    # )
+    # loop through the additional channels
+    # setup the channel
+
+def default_options():
+    post_to_slack("yes")
+    post_to_slack("no")
+    post_to_slack("idk")
+
+def energy_check():
+    post_to_slack("Checking your Energy Level!")
+    count = 1
+    while (count <= 10):   
+        post_to_slack(str(count))
+        count = count + 1
+    post_to_slack("10 being most tired")
+
+def process_with_question(first):
+    post_to_slack(first)
+    default_options()
+
+def pick():
+    # pick from the class list
+    
+    # generate a random number from 1 to size of class
+    # pick the name of the person
+    print("randomly pick someone")
+    
+
+def process_with_question_n_options(first, second):
+    post_to_slack(first)
+    arr = second.split("/")
+    for x in arr:
+        post_to_slack(x)
+
+
+def post_to_individual_person(userid, message):
+    client.chat_postMessage(
+        channel=userid,
+        text=message,
+        as_user=True,
+        icon_url="https://ca.slack-edge.com/T026W7BBT9Q-U026V9F8LLF-e42dd120a81f-512",
+        username="ytbryan"
+    )
+    print("individual message")
+    #https://api.slack.com/methods/users.list
+
+def question():
+    post_to_slack(":red_circle: Drop your questions here")
+
+def truth():
+    post_to_slack("Apple is the greatest company of all time. :appleinc And Ruby is the best programming language ever.")
+
+def need_more_time():
+    post_to_slack("Need more time? thumb up for yes.")
+
+def lunch():
+    post_to_slack("1hr")
+    post_to_slack("1hr 15min")
+    post_to_slack("1hr 30min")
+
+def skip():
+    post_to_slack("Skip? Move on?")
+    post_to_slack("Do you have something to say? Say it.")
+
+def biobreak(duration=5):
+    post_to_slack("{duration} min break")
+    post_to_slack("thumb up when back")
+
+def test():
+    post_to_slack("Just testing. Please ignore.")
+    
+try:
+    # two arguments e.g poll "are you doing fine?"
+    if len(sys.argv) == 2:
+        if(sys.argv[1] == "pick"):
+            # question()
+            # collect_reactions()
+            post_to_individual_person("U027DP00YGL","Bot: any question for me? :) ")
+            # post_to_individual_person("U0277095NBX","Does this send to multiple users at the same time? :) ")
+
+            # test()
+        elif(sys.argv[1] == "skip"):
+            skip()
+        elif(sys.argv[1] == "truth"):
+            truth()
+        elif(sys.argv[1] == "more"):
+            need_more_time()
+        elif(sys.argv[1] == "break"):
+            biobreak()
+        elif(sys.argv[1] == "test"):
+            test()
+        elif(sys.argv[1] == "everyone"):
+            get_everyone()
+        else: 
+            process_with_question(sys.argv[1])
+            write_to_history(sys.argv[1])
+    # three arguments e.g. poll "are you doing fine?" "yes|no|well....."
+    elif len(sys.argv) == 3:
+        process_with_question_n_options(sys.argv[1], sys.argv[2])
+        write_to_history(sys.argv[1] + " " + sys.argv[2])
+    else:  
+        energy_check()
+
+except SlackApiError as e:
+    # perhaps this should go into 
+    logging.error(f"Error posting message: {e}")
+
+# https://github.com/SlackAPI/python-slack-sdk
+
+
+# Just some random text to organise my thoughts
+# poll 
+# => This should give me An energy level check! 
+
+# poll "Are you doing fine?"
+# => this should give me 
+# yes
+# no
+# idk
+
+# poll "Which topic do you want to do" "ansible|terraform|idk"
+# => 
+
+# Other possibilities
+# poll history
+#=> list down all the questions that you have used
+#=> select from history without retyping the questions
+
+# poll random 
+#=> randomly pick a learner? 🤯
+# simply get the name list 
+# then generate a random number and pick a name from the array
+
+# poll jokes
+
+#=> produce a random joke from the list
+#
+
+# poll template 
+#=> save things as templates to be used later
+
+# setup 
+# => setup the workspace with the right channels
